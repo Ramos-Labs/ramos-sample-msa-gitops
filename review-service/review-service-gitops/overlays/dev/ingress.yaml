@@ -1,0 +1,25 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  annotations:
+    nginx.ingress.kubernetes.io/affinity: cookie
+    nginx.ingress.kubernetes.io/session-cookie-hash: sha256
+    nginx.ingress.kubernetes.io/session-cookie-name: route
+  name: review-service-ing
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: dev-inje-msa-demo.cone-chain.com
+    http:
+      paths:
+      - backend:
+          service:
+            name: review-service-svc
+            port:
+              number: 9003
+        path: /review-service
+        pathType: Prefix
+  tls:
+  - hosts:
+    - dev-inje-msa-demo.cone-chain.com
+    secretName: secret-tls

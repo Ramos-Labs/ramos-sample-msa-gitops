@@ -1,0 +1,30 @@
+apiVersion: triggers.tekton.dev/v1beta1
+kind: EventListener
+metadata:
+  labels:
+    app: gateway-server
+    env: dev
+    type: deploy
+  name: gateway-server-dev-deploy-el
+  namespace: inje-msa-demo-cicd
+spec:
+  namespaceSelector: {}
+  resources: {}
+  serviceAccountName: cicdbot
+  triggers:
+  - name: trigger
+    bindings:
+    - kind: TriggerBinding
+      name: git-host-url
+      value: $(body.git-host-url)
+    - kind: TriggerBinding
+      name: code-repo-org
+      value: $(body.code-repo-org)
+    - kind: TriggerBinding
+      name: code-repo-name
+      value: $(body.code-repo-name)
+    - kind: TriggerBinding
+      name: cicd-revision
+      value: $(body.cicd-revision)
+    template:
+      ref: gateway-server-dev-deploy-tt

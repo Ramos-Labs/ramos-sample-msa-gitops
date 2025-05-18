@@ -1,0 +1,31 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  labels:
+    app: gateway-server
+    env: dev
+    type: build
+  name: gateway-server-dev-build-cj
+  namespace: inje-msa-demo-cicd
+spec:
+  suspend: true
+  timeZone: 'Asia/Seoul'
+  schedule: "30 8,12,18 * * 1-5"
+  failedJobsHistoryLimit: 1
+  successfulJobsHistoryLimit: 1
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+          - name: curl
+            image: harbor.cone-chain.com/library/curlimages/curl:8.5.0
+            args:
+            - curl
+            - -X
+            - POST
+            - --data
+            - '{"git-host-url": "https://gitea.cone-chain.com", "code-repo-org": "inje-msa-demo", "code-repo-name": "gateway-server", "code-revision": "develop"}'
+            - el-gateway-server-dev-build-el.inje-msa-demo-cicd.svc.cluster.local:8080
+          restartPolicy: Never
+

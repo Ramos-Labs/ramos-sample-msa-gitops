@@ -1,0 +1,25 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  annotations:
+    nginx.ingress.kubernetes.io/affinity: cookie
+    nginx.ingress.kubernetes.io/session-cookie-hash: sha256
+    nginx.ingress.kubernetes.io/session-cookie-name: route
+  name: author-service-ing
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: dev-inje-msa-demo.cone-chain.com
+    http:
+      paths:
+      - backend:
+          service:
+            name: author-service-svc
+            port:
+              number: 9002
+        path: /author-service
+        pathType: Prefix
+  tls:
+  - hosts:
+    - dev-inje-msa-demo.cone-chain.com
+    secretName: secret-tls

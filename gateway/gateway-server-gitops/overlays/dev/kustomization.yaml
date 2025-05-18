@@ -1,0 +1,95 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+- ../../base
+- ingress.yaml
+namespace: inje-msa-demo-dev
+commonLabels:
+  app: gateway-server
+images:
+- name: gateway-server
+  newName: harbor.cone-chain.com/inje-msa-demo-dev/inje-msa-demo/gateway-server
+  newTag: latest
+patches:
+- target:
+    kind: Deployment
+    name: gateway-server-dp
+  patch: |-
+    kind: Deployment
+    metadata:
+      name: gateway-server-dp
+    spec:
+      template:
+        spec:
+          # nodeSelector:
+          #   magnum.openstack.org/nodegroup: shh
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                - matchExpressions:
+                  - key: kubernetes.io/hostname
+                    operator: In
+                    values:
+                    - dev-shh-node-0
+                    - dev-shh-node-1
+            podAntiAffinity:
+              preferredDuringSchedulingIgnoredDuringExecution:
+              - podAffinityTerm:
+                  labelSelector:
+                    matchLabels:
+                      app: gateway-server
+                  topologyKey: kubernetes.io/hostname
+                weight: 1
+          containers:
+          - name: gateway-server-con
+            env:
+            # - name: JAVA_OPTS
+            #   value: "-Dfile.encoding=UTF-8 -Dspring.profiles.active=dev"
+            ###
+            # OpenTelemetry Application Performance Management
+            ## https://github.com/blueswen/opentelemetry-apm?tab=readme-ov-file#java---spring-boot
+            - name: JAVA_OPTS
+              value: "-Dfile.encoding=UTF-8 -Dspring.profiles.active=dev -javaagent:/app/opentelemetry-javaagent.jar"
+            - name: OTEL_EXPORTER_OTLP_ENDPOINT
+              value: http://otel-collector.monitoring.svc.cluster.local:4317
+            - name: OTEL_EXPORTER_OTLP_PROTOCOL
+              value: grpc
+            - name: OTEL_TRACES_EXPORTER
+              value: otlp
+            - name: OTEL_METRICS_EXPORTER
+              value: none
+            - name: OTEL_LOGS_EXPORTER
+              value: otlp
+            - name: OTEL_SERVICE_NAME
+              value: gateway-server
+            resources:
+              limits:
+                cpu: 600m
+              requests:
+                cpu: 300m
+            ###    
+- target:
+    kind: PersistentVolumeClaim
+    name: gateway-server-data-pvc
+  patch: |-
+    kind: PersistentVolumeClaim
+    metadata:
+      name: gateway-server-data-pvc
+    spec:
+      resources:
+        requests:
+          storage: 1Gi
+      storageClassName: app-sc    
+- target:
+    kind: PersistentVolumeClaim
+    name: gateway-server-log-pvc
+  patch: |-
+    kind: PersistentVolumeClaim
+    metadata:
+      name: gateway-server-log-pvc
+    spec:
+      resources:
+        requests:
+          storage: 5Gi
+      storageClassName: app-sc

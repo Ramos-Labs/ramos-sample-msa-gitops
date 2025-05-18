@@ -1,0 +1,13 @@
+# Ramos Sample MSA GitOps
+- 라모스의 MSA Demo Application에 대한 GitOps root directory
+- 각 서비스별 GitOps, Tekton Pipeline이 구성됨.
+  - Service Discovery
+  - Gateway
+  - Book Service
+  - Author Service
+  - Review Service
+- CONE-Chain(NHN Native Deck)을 활용한 CI/CD 예제 코드를 직접 개발 및 구성함.
+  - Common Cluster의 초기 작업용 구성은 이 Repository에서 제외함.
+  - 주 목적은 OpenTelemetry 수집을 위한 샘플용 MSA 예제 코드를 개발하고 GitOps 기반으로 CI/CD 배포.
+- author: HakHyeon Song
+- 2025.04 ~ 2025.05
