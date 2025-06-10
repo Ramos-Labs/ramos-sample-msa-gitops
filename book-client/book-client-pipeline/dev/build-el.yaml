@@ -1,0 +1,72 @@
+apiVersion: triggers.tekton.dev/v1beta1
+kind: EventListener
+metadata:
+  labels:
+    app: book-client
+    env: dev
+    type: build
+  name: book-client-dev-build-el
+  namespace: inje-msa-demo-cicd
+spec:
+  namespaceSelector: {}
+  resources: {}
+  serviceAccountName: cicdbot
+  triggers:
+  - name: gitea
+    interceptors:
+    - ref:
+        kind: ClusterInterceptor
+        name: cel
+      params:
+      - name: filter
+        value: >-
+          header.match('X-Gitea-Event', 'push')
+      - name: overlays
+        value:
+        - expression: body.repository.clone_url.replace('/' + body.repository.full_name + '.git', '')
+          key: git-host-url
+        - expression: body.repository.owner.username
+          key: code-repo-org
+        - expression: body.repository.name.lowerAscii()
+          key: code-repo-name
+        - expression: body.after
+          key: code-revision
+    bindings:
+    - kind: TriggerBinding
+      name: git-host-url
+      value: $(extensions.git-host-url)
+    - kind: TriggerBinding
+      name: code-repo-org
+      value: $(extensions.code-repo-org)
+    - kind: TriggerBinding
+      name: code-repo-name
+      value: $(extensions.code-repo-name)
+    - kind: TriggerBinding
+      name: code-revision
+      value: $(extensions.code-revision)
+    template:
+      ref: book-client-dev-build-tt
+  - name: trigger
+    interceptors:
+    - ref:
+        kind: ClusterInterceptor
+        name: cel
+      params:
+      - name: filter
+        value: >-
+          header.canonical('X-Gitea-Event') == ''
+    bindings:
+    - kind: TriggerBinding
+      name: git-host-url
+      value: $(body.git-host-url)
+    - kind: TriggerBinding
+      name: code-repo-org
+      value: $(body.code-repo-org)
+    - kind: TriggerBinding
+      name: code-repo-name
+      value: $(body.code-repo-name)
+    - kind: TriggerBinding
+      name: code-revision
+      value: $(body.code-revision)
+    template:
+      ref: book-client-dev-build-tt

@@ -1,0 +1,55 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+- ../../base
+- ingress.yaml
+namespace: inje-msa-demo-dev
+commonLabels:
+  app: book-client
+images:
+- name: book-client
+  newName: harbor.cone-chain.com/inje-msa-demo-dev/inje-msa-demo/book-client
+  newTag: latest
+patches:
+- target:
+    kind: Deployment
+    name: book-client-dp
+  patch: |-
+    kind: Deployment
+    metadata:
+      name: book-client-dp
+    spec:
+      template:
+        spec:
+          # nodeSelector:
+          #   magnum.openstack.org/nodegroup: shh
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                - matchExpressions:
+                  - key: kubernetes.io/hostname
+                    operator: In
+                    values:
+                    - dev-shh-node-0
+                    - dev-shh-node-1
+            podAntiAffinity:
+              preferredDuringSchedulingIgnoredDuringExecution:
+              - podAffinityTerm:
+                  labelSelector:
+                    matchLabels:
+                      app: book-client
+                  topologyKey: kubernetes.io/hostname
+                weight: 1
+- target:
+    kind: PersistentVolumeClaim
+    name: book-client-log-pvc
+  patch: |-
+    kind: PersistentVolumeClaim
+    metadata:
+      name: book-client-log-pvc
+    spec:
+      resources:
+        requests:
+          storage: 5Gi
+      storageClassName: app-sc
